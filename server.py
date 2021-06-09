@@ -50,7 +50,7 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             with open(filename, 'rb') as video:
                 try:
                     self.wfile.write(video.read())
-                except BrokenPipeError:
+                except (ConnectionResetError, BrokenPipeError):
                     self.wfile.flush()
 
             os.unlink(filename)
