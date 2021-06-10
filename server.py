@@ -5,6 +5,9 @@ import urllib.parse
 import youtube_dl
 
 class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
+    server_version = 'YDLtor/0.1'
+    sys_version = ''
+
     def backlink(self, msg):
         return b'<p>%b</p><a href="/">Return Home</a>' % msg
 
