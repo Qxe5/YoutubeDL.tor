@@ -1,4 +1,5 @@
 import os
+import random
 import http.server
 import urllib.parse
 
@@ -42,10 +43,13 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         elif self.path.startswith('/dl?url='):
             url = urllib.parse.unquote(self.path.partition('=')[2])
 
-            dler = youtube_dl.YoutubeDL({'proxy' : 'socks5://127.0.0.1:9050', 'format' : 'mp4'})
-            vid_info = None
+            filename = '.'
+            while os.path.exists(filename):
+                filename = str(random.randint(0, 1000000)) + '.mp4'
+
+            dler = youtube_dl.YoutubeDL({'proxy' : 'socks5://127.0.0.1:9050', 'format' : 'mp4', 'outtmpl' : filename})
             try:
-                vid_info = dler.extract_info(url)
+                dler.download([url])
             except youtube_dl.utils.DownloadError:
                 self.send_response(400)
                 self.send_header('Content-Type', 'text/html')
@@ -55,8 +59,6 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
                 self.close_connection = True
                 return
-
-            filename = vid_info.get('title') + '-' + vid_info.get('id') + '.mp4'
 
             self.send_response(200)
             self.send_header('Content-Type', 'text/html')
