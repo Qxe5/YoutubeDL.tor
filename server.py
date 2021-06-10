@@ -84,5 +84,5 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
         self.close_connection = True
 
-with http.server.HTTPServer(('127.0.0.1', 8080), HTTPRequestHandler) as server:
+with http.server.ThreadingHTTPServer(('127.0.0.1', 8080), HTTPRequestHandler) as server:
     server.serve_forever()
