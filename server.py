@@ -18,7 +18,7 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     def send(self, resp):
         try:
             self.wfile.write(resp)
-        except BrokenPipeError:
+        except (BrokenPipeError, ConnectionResetError):
             self.wfile.flush()
 
     def do_GET(self):
@@ -62,7 +62,7 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             with open('video.html', 'rb') as video_html:
                 try:
                     self.wfile.write(video_html.read().replace(b'%FILENAME', filename.encode()))
-                except BrokenPipeError:
+                except (BrokenPipeError, ConnectionResetError):
                     self.wfile.flush()
                     os.unlink(filename)
         elif self.path.endswith('.mp4'):
