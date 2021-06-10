@@ -39,7 +39,7 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         elif self.path.startswith('/dl?url='):
             url = urllib.parse.unquote(self.path.partition('=')[2])
 
-            dler = youtube_dl.YoutubeDL({'format' : 'mp4'})
+            dler = youtube_dl.YoutubeDL({'format' : 'mp4', 'proxy' : 'socks5://127.0.0.1:9050'})
             vid_info = None
             try:
                 vid_info = dler.extract_info(url)
