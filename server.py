@@ -55,7 +55,7 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
                 self.send_header('Content-Type', 'text/html')
                 self.end_headers()
 
-                self.send(self.backlink(b'Check that the URL is valid and try again'))
+                self.send(self.backlink(b'youtube-dl error: Check that the URL is valid and try again'))
 
                 self.close_connection = True
                 return
