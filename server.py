@@ -8,6 +8,19 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     def backlink(self, msg):
         return b'<p>%b</p><a href="/">Return Home</a>' % msg
 
+    def forbidmsg(self):
+        self.send_response(403)
+        self.send_header('Content-Type', 'text/html')
+        self.end_headers()
+
+        self.send(self.backlink(b'Not Allowed'))
+
+    def send(self, resp):
+        try:
+            self.wfile.write(resp)
+        except BrokenPipeError:
+            self.wfile.flush()
+
     def do_GET(self):
         if self.path == '/':
             self.send_response(200)
@@ -15,14 +28,14 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
 
             with open('index.html', 'rb') as index:
-                self.wfile.write(index.read())
+                self.send(index.read())
         elif self.path == '/favicon.ico':
             self.send_response(200)
             self.send_header('Content-Type', 'image/x-icon')
             self.end_headers()
 
             with open('favicon.ico', 'rb') as icon:
-                self.wfile.write(icon.read())
+                self.send(icon.read())
         elif self.path.startswith('/dl?url='):
             url = urllib.parse.unquote(self.path.partition('=')[2])
 
@@ -35,7 +48,7 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
                 self.send_header('Content-Type', 'text/html')
                 self.end_headers()
 
-                self.wfile.write(self.backlink(b'Invalid URL'))
+                self.send(self.backlink(b'Invalid URL'))
 
                 self.close_connection = True
                 return
@@ -43,22 +56,31 @@ class HTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             filename = vid_info.get('title') + '-' + vid_info.get('id') + '.mp4'
 
             self.send_response(200)
-            self.send_header('Content-Type', 'video/mp4')
-            self.send_header('Content-Disposition', 'attachment; filename="%s"' % filename)
-            self.end_headers()
-
-            with open(filename, 'rb') as video:
-                try:
-                    self.wfile.write(video.read())
-                except (ConnectionResetError, BrokenPipeError):
-                    self.wfile.flush()
-
-            os.unlink(filename)
-        else:
-            self.send_response(403)
             self.send_header('Content-Type', 'text/html')
             self.end_headers()
-            self.wfile.write(self.backlink(b'Not Allowed'))
+
+            with open('video.html', 'rb') as video_html:
+                try:
+                    self.wfile.write(video_html.read().replace(b'%FILENAME', filename.encode()))
+                except BrokenPipeError:
+                    self.wfile.flush()
+                    os.unlink(filename)
+        elif self.path.endswith('.mp4'):
+            filename = urllib.parse.unquote(self.path)[1:]
+
+            if (os.path.exists(filename)):
+                self.send_response(200)
+                self.send_header('Content-Type', 'video/mp4')
+                self.end_headers()
+
+                with open(filename, 'rb') as video:
+                    self.send(video.read())
+
+                os.unlink(filename)
+            else:
+                self.forbidmsg()
+        else:
+            self.forbidmsg()
 
         self.close_connection = True
 
